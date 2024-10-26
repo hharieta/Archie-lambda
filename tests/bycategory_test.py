@@ -4,7 +4,7 @@ import unittest
 import json
 from unittest.mock import patch, MagicMock
 # Add the path to the sys.path for execute 
-# python /tests/emotion_test.py in the root directory
+# python /tests/*_test.py in the root directory
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from lambda_function.index import lambda_handler
 from data import BodyTestResponse, BodyMockResponse
