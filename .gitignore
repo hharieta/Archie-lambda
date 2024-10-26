@@ -1,0 +1,4 @@
+*env
+*.env
+.SDS_Store
+.mypy_cache
