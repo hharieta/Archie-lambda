@@ -74,16 +74,17 @@ def get_latest_templates(event) -> Dict[str, Any]:
 
 def get_templates(event) -> Dict[str, Any]:
     try:
-        if event.get('queryStringParameters'):
-            query_params = event['queryStringParameters']
-            if query_params.get('provider'):
-                provider = query_params.get('provider').strip()
-                scan_params = {
-                    'TableName': DYNAMODB_TABLE.name,
-                    'FilterExpression': Attr('cloud').eq(provider.upper())
-                }
-        else:
-            scan_params = {'TableName': DYNAMODB_TABLE.name}
+        query_params = event.get('queryStringParameters', {})
+        provider = query_params.get('provider', '').srtrip()
+
+        scan_params = {
+            'TableName': DYNAMODB_TABLE.name
+        }
+
+        if provider:
+            scan_params = {
+                'FilterExpression': Attr('cloud').eq(provider.upper())
+            }
 
         items = scan_db_records(scan_params, [])
         return build_response(200, items)
@@ -108,7 +109,7 @@ router = {
     '/templates/latest': {
         'GET': lambda event: get_latest_templates(event)
     },
-    '/templates/category': {
+    '/templates/bycategory': {
         'GET': lambda event: get_template_category(event)
     }
 }
@@ -129,7 +130,6 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             response = build_response(405, 'Method Not Allowed')
         
     except Exception as e:
-        print('Error', e)
-        response = build_response(401, 'Error processing request')
+        response = build_response(500, str(e))
 
     return response 
