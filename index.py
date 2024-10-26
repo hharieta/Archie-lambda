@@ -1,3 +1,4 @@
+from collections import defaultdict
 from os import getenv
 from decimal import Decimal
 from typing import Any, List, Dict
@@ -48,14 +49,16 @@ def scan_db_records(params: Dict[str, Any], item: List[Any]) -> List[Dict[str, A
 ### CRUD operations ###
 def get_template_category(event: Dict[str, Any]) -> Dict[str, Any]:
     try:
-        if event['queryStringParameters'].get('category'):
-            scan_params = {
-                'TableName': DYNAMODB_TABLE.name,
-                'FilterExpression': Attr('category').eq(event['queryStringParameters']['category'])
-            }
+        responce = DYNAMODB_TABLE.scan()
+        items = responce['Items']
 
-        items = scan_db_records(scan_params, [])
-        return build_response(200, items)
+        categories: defaultdict[str, List[Dict[str, Any]]] = defaultdict(list)
+
+        for item in items:
+            categories[item['category']].append(item)
+        
+
+        return build_response(200, {"data": dict(categories)})
     except ClientError as e:
         print(e)
         return build_response(400, e.response['Error']['Message'])
@@ -74,8 +77,8 @@ def get_latest_templates(event) -> Dict[str, Any]:
 
 def get_templates(event) -> Dict[str, Any]:
     try:
-        query_params = event.get('queryStringParameters', {})
-        provider = query_params.get('provider', '').srtrip()
+        query_params = event.get('queryStringParameters') or {}
+        provider = query_params.get('provider', '')
 
         scan_params = {
             'TableName': DYNAMODB_TABLE.name
